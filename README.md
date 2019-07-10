@@ -1,3 +1,5 @@
-# tech-link
+# Tech-link
 
-Network for preventing and aiding in the creation of value for users
+Network for the secure transfer of assets and refugee to and from shelters to prevent fraud, aid in the location of people and distribution of key assets to shelters through the assistance of AI.
+
+
