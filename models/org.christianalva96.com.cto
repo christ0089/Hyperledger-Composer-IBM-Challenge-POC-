@@ -1,0 +1,142 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Write your model definitions here
+ */
+
+namespace org.christianalva96.com
+
+abstract participant User identified by userId {
+    o String userId
+    o String firstName
+    o String lastName
+    o String email
+}
+
+// State Declaration of Refugee/Commodity/Shelter/ShelterRoles/
+enum RefugeeState {
+  o ARRIVED
+  o DEPARTED
+  o CRITICAL
+  o RESCUED 
+}
+
+enum ShelterState {
+  o AVAILABLE
+  o AFFECTED
+  o FULL_CAPACITY
+}
+
+enum CommodityState {
+  o CREATED
+  o IN_TRANSIT
+  o DELIVERED
+  o CONSUMED
+  o OUT_OF_STOCK
+}
+
+enum ShelterParticipantRole {
+  o ADMIN
+  o RECEIVER
+  o DELIVER
+  o CARETAKER
+  o COUNTER
+}
+
+concept Address {
+  o String address
+  o String city
+  o String state
+  o String country optional
+  o String zip optional
+}
+
+concept rHistory {
+  o RefugeeState state 
+  o DateTime updateTime
+}
+
+concept sHistory {
+  o ShelterState state 
+  o DateTime updateTime
+}
+
+asset RefugeeHistory identified by userId {
+  o String userId
+  o rHistory[] refugeeHist
+}
+
+asset Commodity identified by tradingSymbol {
+    o String tradingSymbol
+    o String description
+    o String mainExchange
+    o String name
+    o Integer quantity
+    o Integer used
+    o Double burnRate
+    o CommodityState state
+    o DateTime lastUpdateTime
+    --> Donator donator
+    --> Shelter receiver // Shelter that received the commodity
+    --> Refugee[] consumers optional //All the Refugees that consumed the object 
+} 
+
+asset ShelterSpace identified by shelterId {
+  o String shelterId
+  o Integer currentRefugeeCount
+  o sHistory[] shelterHist
+  --> RefugeeHistory[] currentRefugees
+} 
+
+// Donator is the one that bus the assets the shelter receivess
+participant Donator extends User {
+
+}
+// Refugee is the one that consumes the assets the shelter gives out
+participant Refugee extends User  {
+}
+
+participant ShelterParticipant extends User  {
+  o ShelterParticipantRole participantRole 
+  o String shelterId
+}
+
+// Shelter is the one that distributes the assets it recieves
+participant Shelter identified by shelterId  {
+  o String shelterId
+  o String name
+  o Integer capacity
+  o Address address
+  o ShelterParticipant[] shelterParticipants optional
+}
+
+// Exchange of Assets between the different Shelters
+transaction Trade {
+    --> Commodity commodity
+    --> Shelter newOwner
+}
+
+// Use of a Commodity
+transaction Consumption {
+  --> Commodity commodity
+  --> Refugee[] consumer
+  --> ShelterParticipant shelterParticipant
+}
+
+// State of Refugee at a particular shelter
+transaction RefugeeShelterRelation {
+  --> ShelterSpace shelterSpace
+  --> RefugeeHistory[] refugee
+}
