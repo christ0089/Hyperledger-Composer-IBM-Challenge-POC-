@@ -37,13 +37,13 @@ enum ShelterState {
   o AVAILABLE
   o AFFECTED
   o FULL_CAPACITY
+  o OVER_CAPACITY
 }
 
 enum CommodityState {
   o CREATED
   o IN_TRANSIT
   o DELIVERED
-  o CONSUMED
   o OUT_OF_STOCK
 }
 
@@ -73,8 +73,14 @@ concept sHistory {
   o DateTime updateTime
 }
 
-concept cHistory {
+concept cStateHistory {
   o CommodityState state 
+  o DateTime updateTime
+}
+
+concept cHistory {
+  --> ShelterParticipant giver // Shelter participant that gave away the commodity
+  --> Refugee consumer //All the Refugees that consumed the object 
   o DateTime updateTime
 }
 
@@ -91,17 +97,19 @@ asset Commodity identified by tradingSymbol {
     o Integer originalQuantity
     o Integer consumedQuantity
     o Integer availableQuantity
+    o cStateHistory[] commodityStateHist
     o cHistory[] commodityHist
+    o cHistory currentState
     --> Donator donator
     --> Shelter receiver // Shelter that received the commodity
-    --> Refugee[] consumers optional //All the Refugees that consumed the object 
 } 
 
 asset ShelterSpace identified by shelterId {
   o String shelterId
   o Integer currentRefugeeCount
+  o sHistory currentState
   o sHistory[] shelterHist
-  --> RefugeeHistory[] currentRefugees
+  --> Refugee[] currentRefugees
 } 
 
 // Donator is the one that bus the assets the shelter receivess
@@ -132,21 +140,16 @@ transaction Trade {
     --> Shelter newOwner
 }
 
-transaction Donation {
-  o Commodity commodity
-  --> Shelter receiver
-  --> Donator donator
-}
-
 // Use of a Commodity
 transaction Consumption {
   --> Commodity commodity
-  --> Refugee[] consumer
-  --> ShelterParticipant shelterParticipant
+  o Refugee consumer
+  o ShelterParticipant shelterParticipant
 }
 
 // State of Refugee at a particular shelter
 transaction RefugeeShelterRelation {
   --> ShelterSpace shelterSpace
-  --> RefugeeHistory[] refugee
+  o RefugeeHistory rHistory
+  o Refugee refugee optional
 }
