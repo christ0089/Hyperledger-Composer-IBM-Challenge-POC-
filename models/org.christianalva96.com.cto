@@ -73,6 +73,11 @@ concept sHistory {
   o DateTime updateTime
 }
 
+concept cHistory {
+  o CommodityState state 
+  o DateTime updateTime
+}
+
 asset RefugeeHistory identified by userId {
   o String userId
   o rHistory[] refugeeHist
@@ -83,11 +88,10 @@ asset Commodity identified by tradingSymbol {
     o String description
     o String mainExchange
     o String name
-    o Integer quantity
-    o Integer used
-    o Double burnRate
-    o CommodityState state
-    o DateTime lastUpdateTime
+    o Integer originalQuantity
+    o Integer consumedQuantity
+    o Integer availableQuantity
+    o cHistory[] commodityHist
     --> Donator donator
     --> Shelter receiver // Shelter that received the commodity
     --> Refugee[] consumers optional //All the Refugees that consumed the object 
@@ -126,6 +130,12 @@ participant Shelter identified by shelterId  {
 transaction Trade {
     --> Commodity commodity
     --> Shelter newOwner
+}
+
+transaction Donation {
+  o Commodity commodity
+  --> Shelter receiver
+  --> Donator donator
 }
 
 // Use of a Commodity
