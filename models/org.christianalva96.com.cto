@@ -64,8 +64,9 @@ concept Address {
 }
 
 concept rHistory {
+  o String shelterId
   o RefugeeState state 
-  o DateTime updateTime
+  o DateTime updateTime optional
 }
 
 concept sHistory {
@@ -75,41 +76,44 @@ concept sHistory {
 
 concept cStateHistory {
   o CommodityState state 
-  o DateTime updateTime
+  o DateTime updateTime optional
 }
 
 concept cHistory {
   --> ShelterParticipant giver // Shelter participant that gave away the commodity
   --> Refugee consumer //All the Refugees that consumed the object 
-  o DateTime updateTime
+  o DateTime updateTime optional
 }
 
 asset RefugeeHistory identified by userId {
   o String userId
+  o rHistory currentState
   o rHistory[] refugeeHist
 }
 
 asset Commodity identified by tradingSymbol {
     o String tradingSymbol
     o String description
-    o String mainExchange
-    o String name
+    o String mainExchange optional
+    o String name optional
     o Integer originalQuantity
     o Integer consumedQuantity
     o Integer availableQuantity
     o cStateHistory[] commodityStateHist
     o cHistory[] commodityHist
-    o cHistory currentState
-    --> Donator donator
-    --> Shelter receiver // Shelter that received the commodity
+    o cStateHistory currentState
+    --> Donator donator	optional
+    --> Shelter receiver optional// Shelter that received the commodity
 } 
 
 asset ShelterSpace identified by shelterId {
   o String shelterId
+  o Integer capacity 
   o Integer currentRefugeeCount
   o sHistory currentState
   o sHistory[] shelterHist
   --> Refugee[] currentRefugees
+  --> ShelterParticipant[] currentStaff
 } 
 
 // Donator is the one that bus the assets the shelter receivess
@@ -131,7 +135,6 @@ participant Shelter identified by shelterId  {
   o String name
   o Integer capacity
   o Address address
-  o ShelterParticipant[] shelterParticipants optional
 }
 
 // Exchange of Assets between the different Shelters
@@ -143,13 +146,30 @@ transaction Trade {
 // Use of a Commodity
 transaction Consumption {
   --> Commodity commodity
-  o Refugee consumer
-  o ShelterParticipant shelterParticipant
+  o cHistory cHistory
 }
 
 // State of Refugee at a particular shelter
 transaction RefugeeShelterRelation {
   --> ShelterSpace shelterSpace
-  o RefugeeHistory rHistory
-  o Refugee refugee optional
+  --> Refugee refugee
+  o rHistory history
 }
+
+transaction Donation {
+  o Commodity commodity
+  --> Donator donator
+  --> Shelter shelter
+}
+
+enum Update {
+  o ADD
+  o DELETE
+}
+
+transaction StaffUpdate {
+  --> ShelterSpace shelterSpace
+  --> ShelterParticipant shelterParticipant
+  o Update updateState
+}
+
